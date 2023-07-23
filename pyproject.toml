@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "mailpurge"
+version = "0.1.0"
+description = ""
+authors = ["Mathieu Lecarme <mathieu@garambrogne.net>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+imapclient = "^2.3.1"
+google-api-python-client = "^2.90.0"
+google-auth-httplib2 = "^0.1.0"
+google-auth-oauthlib = "^1.0.0"
+certifi = "^2023.7.22"
+pyyaml = "^6.0.1"
+
+
+[tool.poetry.group.dev.dependencies]
+pycodestyle = "^2.10.0"
+ruff = "^0.0.275"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
