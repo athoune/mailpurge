@@ -1,17 +1,11 @@
 #!/usr/bin/env python3
-import os
 from pprint import pprint
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 
 from imapclient import IMAPClient
 import yaml
 
 HEADERS = ["list", "x-github"]
-
-
-def iterate_per_year(server: IMAPClient, start: int = 2000, stop: int = 2023):
-    for a in range(start, stop):
-        yield server.search(["BEFORE", date(a, 1, 1), "SINCE", date(a - 1, 1, 1)])
 
 
 def flamer(
@@ -51,6 +45,7 @@ def flamer(
 
 
 if __name__ == "__main__":
+    import os
     assert os.getenv("IMAP"), "You need to set some ENVs"
 
     server = IMAPClient(os.getenv("IMAP"), use_uid=True, ssl=True)
