@@ -35,6 +35,25 @@ class HeadersCache:
         self.db = plyvel.DB(path, create_if_missing=True)
         self.client = client
 
+    def sync(self, start: int = 2000):
+        old = set(int(i) for i in self.db.iterator(include_value=False))
+        fresh = set()
+        added = 0
+        removed = 0
+        for year, messages in iterate_per_year(self.client, start=start):
+            print(year)
+            self.get(messages)
+            for m in messages:
+                if m in old:
+                    old.remove(m)
+                else:
+                    fresh.add(m)
+        print("old", old)
+        print("fresh", fresh)
+        with self.db.write_batch() as wb:
+            for o in old:
+                wb.delete(str(o).encode())
+
     def get(self, *ids):
         print("get", ids)
         todo = []
@@ -72,7 +91,5 @@ if __name__ == "__main__":
     print(client.login(os.getenv("LOGIN"), os.getenv("PASSWORD")))
     client.select_folder("INBOX")
     cache = HeadersCache(client)
-    for year, messages in iterate_per_year(client, start=2005):
-        print(year)
-        for id_, headers in cache.get(*messages):
-            print("\t", headers)
+    cache.sync()
+    client.logout()
