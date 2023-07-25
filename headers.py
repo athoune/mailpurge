@@ -10,7 +10,7 @@ import plyvel
 import orjson
 
 
-def iterate_per_year(client: IMAPClient, start: int = 2000, stop: int = 2023):
+def iterate_per_year(client: IMAPClient, start: int = 2000, stop: int = 2024):
     for year in range(start, stop):
         messages = client.search(["BEFORE", date(year, 1, 1),
                                  "SINCE", date(year - 1, 1, 1)])
