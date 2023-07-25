@@ -48,11 +48,12 @@ if __name__ == "__main__":
     import os
     assert os.getenv("IMAP"), "You need to set some ENVs"
 
-    server = IMAPClient(os.getenv("IMAP"), use_uid=True, ssl=True)
-    print(server.login(os.getenv("LOGIN"), os.getenv("PASSWORD")))
+    client = IMAPClient(os.getenv("IMAP"), use_uid=True, ssl=True)
+    print(client.login(os.getenv("LOGIN"), os.getenv("PASSWORD")))
 
     rules = yaml.load(open("purge.yml", "r"), Loader=yaml.Loader)
     pprint(rules)
 
-    purged = flamer(server, rules, debug=True)
+    purged = flamer(client, rules, debug=True)
     print(purged, "purged")
+    client.logout()
