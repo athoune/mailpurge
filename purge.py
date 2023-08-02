@@ -41,6 +41,9 @@ def flamer(
             print("Purge", len(prunes), "messages")
         purged += len(prunes)
         server.delete_messages(prunes)
+    exp = server.expunge()
+    if debug:
+        print("expunge", exp)
     return purged
 
 
