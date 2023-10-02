@@ -4,16 +4,17 @@ from email.parser import BytesParser
 from email.header import Header
 from email.message import Message
 from datetime import date
+from typing import Iterator, Tuple
 
 from imapclient import IMAPClient
 import plyvel
 import orjson
 
 
-def iterate_per_year(client: IMAPClient, start: int = 2000, stop: int = 2024):
-    for year in range(start, stop):
-        messages = client.search(["BEFORE", date(year, 1, 1),
-                                 "SINCE", date(year - 1, 1, 1)])
+def iterate_per_year(client: IMAPClient, start: int = 2000, stop: int = 2023) -> Iterator[Tuple[int, list[int]]]:
+    for year in range(start, stop + 1):
+        messages = client.search(["BEFORE", date(year+1, 1, 1),
+                                  "SINCE", date(year, 1, 1)])
         if len(messages) == 0:
             continue
         print("# messages", len(messages))
@@ -31,31 +32,32 @@ def default(obj):
 
 
 class HeadersCache:
+    "IMAP headers, with a cache"
     def __init__(self, client: IMAPClient, path: str = "./headers.cache"):
         self.db = plyvel.DB(path, create_if_missing=True)
         self.client = client
 
     def sync(self, start: int = 2000):
+        "sync all IMAP messages, with its cache"
         old = set(int(i) for i in self.db.iterator(include_value=False))
         fresh = set()
-        added = 0
-        removed = 0
         for year, messages in iterate_per_year(self.client, start=start):
-            print(year)
-            self.get(messages)
+            print("Year:", year, "messages", len(messages))
+            for m in self[messages]:
+                pass  # just drain the iterator
             for m in messages:
                 if m in old:
                     old.remove(m)
                 else:
                     fresh.add(m)
-        print("old", old)
-        print("fresh", fresh)
+        print("old", len(old))
+        print("fresh", len(fresh))
         with self.db.write_batch() as wb:
             for o in old:
                 wb.delete(str(o).encode())
 
-    def get(self, *ids):
-        print("get", ids)
+    def __getitem__(self, ids) -> Iterator:
+        "Lazy fetch some ids"
         todo = []
         parser = BytesParser()
 
@@ -70,7 +72,7 @@ class HeadersCache:
             size = min(len(todo), 100)
             ids = todo[:size]
             wb = self.db.write_batch()
-            print("messages", ids, size, todo)
+            #print("messages", ids, size, todo)
             for msgid, data in self.client.fetch(ids, ["RFC822"]).items():
                 if msgid is None:
                     continue

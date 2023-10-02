@@ -53,6 +53,10 @@ if __name__ == "__main__":
 
     client = IMAPClient(os.getenv("IMAP"), use_uid=True, ssl=True)
     print(client.login(os.getenv("LOGIN"), os.getenv("PASSWORD")))
+    print("Capabilities", client.capabilities())
+    print("ID", client.id_())
+    print("Quota", client.get_quota())
+    print("Folders", client.list_folders())
 
     rules = yaml.load(open("purge.yml", "r"), Loader=yaml.Loader)
     pprint(rules)
