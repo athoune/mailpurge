@@ -1,49 +1,51 @@
 #!/usr/bin/env python3
 from pprint import pprint
 from datetime import datetime, timedelta
+from itertools import batched
 
 from imapclient import IMAPClient
 import yaml
 
 HEADERS = ["list", "x-github"]
+BATCH_DELETE_SIZE = 500
 
 
 def flamer(
-    server: IMAPClient, rules: dict, box: str = "INBOX", debug: bool = False
+    server: IMAPClient, rules: dict, debug: bool = False
 ) -> int:
     delta = timedelta(days=rules["old"])
 
-    select_info = server.select_folder(box)
-    if debug:
-        print("%d messages in INBOX" % select_info[b"EXISTS"])
 
     now = datetime.now()
     purged = 0
 
-    for purge in rules["purge"]:
-        if purge is None:
-            continue
-        k, v = list(purge.items())[0]
-        criteria = [k.upper(), v]
-        for prefix in HEADERS:
-            if k.lower().startswith(prefix):
-                criteria = ["HEADER", k, v]
-                break
-        messages = server.search(criteria)
+    for folder, rules in rules["purge"].items():
+        select_info = server.select_folder(folder)
         if debug:
-            print("search", criteria, len(messages))
-        prunes = []
-        for msgid, data in server.fetch(messages, ["ENVELOPE"]).items():
-            envelope = data[b"ENVELOPE"]
-            if (now - envelope.date) > delta:
-                prunes.append(msgid)
-        if debug:
-            print("Purge", len(prunes), "messages")
-        purged += len(prunes)
-        server.delete_messages(prunes)
-    exp = server.expunge()
-    if debug:
-        print("expunge", exp)
+            print("%d messages in INBOX" % select_info[b"EXISTS"])
+        for purge in rules:
+            k, v = list(purge.items())[0]
+            criteria = [k.upper(), v]
+            for prefix in HEADERS:
+                if k.lower().startswith(prefix):
+                    criteria = ["HEADER", k, v]
+                    break
+            messages = server.search(criteria)
+            if debug:
+                print("search", criteria, len(messages))
+            prunes = []
+            for msgid, data in server.fetch(messages, ["ENVELOPE"]).items():
+                envelope = data[b"ENVELOPE"]
+                if (now - envelope.date) > delta:
+                    prunes.append(msgid)
+            if debug:
+                print("Purge", len(prunes), "messages")
+            purged += len(prunes)
+            for batch in batched(prunes, BATCH_DELETE_SIZE):
+                server.delete_messages(batch)
+                exp = server.expunge()
+                if debug:
+                    print("expunge", exp)
     return purged
 
 
