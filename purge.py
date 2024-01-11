@@ -6,7 +6,7 @@ from itertools import batched
 from imapclient import IMAPClient
 import yaml
 
-HEADERS = ["list", "x-github"]
+HEADERS = ["list"]
 BATCH_DELETE_SIZE = 500
 
 
@@ -30,6 +30,8 @@ def flamer(
                 if k.lower().startswith(prefix):
                     criteria = ["HEADER", k, v]
                     break
+            if k.find("-") != -1:
+                criteria = ["HEADER", k, v]
             messages = server.search(criteria)
             if debug:
                 print("search", criteria, len(messages))
