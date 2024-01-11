@@ -35,6 +35,8 @@ def flamer(
                 print("search", criteria, len(messages))
             prunes = []
             for msgid, data in server.fetch(messages, ["ENVELOPE"]).items():
+                if b"ENVELOPE" not in data:
+                    continue
                 envelope = data[b"ENVELOPE"]
                 if (now - envelope.date) > delta:
                     prunes.append(msgid)
