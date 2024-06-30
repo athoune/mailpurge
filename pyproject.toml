@@ -1,28 +1,21 @@
-[tool.poetry]
+[project]
 name = "mailpurge"
 version = "0.1.0"
 description = ""
-authors = ["Mathieu Lecarme <mathieu@garambrogne.net>"]
+authors = [{ name = "Mathieu Lecarme", email = "mathieu@garambrogne.net" }]
 readme = "README.md"
+dependencies = [
+    "imapclient == 3.*",
+    "google-api-python-client >= 2.90",
+    "google-auth-httplib2",
+    "google-auth-oauthlib",
+    "certifi",
+    "pyyaml == 6.*",
+    "orjson",
+    "plyvel-ci== 1.5.*",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-imapclient = "^3.0.0"
-google-api-python-client = "^2.90.0"
-google-auth-httplib2 = "^0.1.0"
-google-auth-oauthlib = "^1.0.0"
-certifi = "^2023.7.22"
-pyyaml = "^6.0.1"
-orjson = "^3.9.2"
-plyvel-ci = "^1.5.0"
-
-
-[tool.poetry.group.dev.dependencies]
-pycodestyle = "^2.10.0"
-ruff = "^0.0.275"
-pytest = "^7.4.4"
-pytest-cov = "^4.1.0"
-
+[tool.hatch]
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"

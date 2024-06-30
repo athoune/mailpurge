@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
-from pprint import pprint
+import os
 from datetime import datetime, timedelta
 from itertools import batched
+from pprint import pprint
 
-from imapclient import IMAPClient
 import yaml
+from imapclient import IMAPClient
 
 HEADERS = ["list"]
 BATCH_DELETE_SIZE = 500
 
 
-def flamer(
-    server: IMAPClient, rules: dict, debug: bool = False
-) -> int:
+def flamer(server: IMAPClient, rules: dict, debug: bool = False) -> int:
     delta = timedelta(days=rules["old"])
-
 
     now = datetime.now()
     purged = 0
@@ -24,6 +22,10 @@ def flamer(
         if debug:
             print("%d messages in INBOX" % select_info[b"EXISTS"])
         for purge in rules:
+            if "old" in purge:
+                age = timedelta(purge["old"])
+            else:
+                age = delta
             k, v = list(purge.items())[0]
             criteria = [k.upper(), v]
             for prefix in HEADERS:
@@ -40,7 +42,7 @@ def flamer(
                 if b"ENVELOPE" not in data:
                     continue
                 envelope = data[b"ENVELOPE"]
-                if (now - envelope.date) > delta:
+                if (now - envelope.date) > age:
                     prunes.append(msgid)
             if debug:
                 print("Purge", len(prunes), "messages")
@@ -53,8 +55,7 @@ def flamer(
     return purged
 
 
-if __name__ == "__main__":
-    import os
+def run():
     assert os.getenv("IMAP"), "You need to set some ENVs"
 
     client = IMAPClient(os.getenv("IMAP"), use_uid=True, ssl=True)
@@ -64,9 +65,12 @@ if __name__ == "__main__":
     print("Quota", client.get_quota())
     print("Folders", client.list_folders())
 
-    rules = yaml.load(open("purge.yml", "r"), Loader=yaml.Loader)
+    rules = yaml.load(open("purge.yml"), Loader=yaml.Loader)
     pprint(rules)
 
     purged = flamer(client, rules, debug=True)
     print(purged, "purged")
     client.logout()
+
+if __name__ == "__main__":
+    run()

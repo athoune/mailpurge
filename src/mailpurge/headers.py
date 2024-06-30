@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
 
-from email.parser import BytesParser
+import os
+from datetime import date
 from email.header import Header
 from email.message import Message
-from datetime import date
+from email.parser import BytesParser
 from typing import Iterator, Tuple
 
-from imapclient import IMAPClient
-import plyvel
 import orjson
+import plyvel
+from imapclient import IMAPClient
 
 
-def iterate_per_year(client: IMAPClient, start: int = 2000, stop: int = 2024) -> Iterator[Tuple[int, list[int]]]:
+def iterate_per_year(
+    client: IMAPClient, start: int = 2000, stop: int = 2024
+) -> Iterator[Tuple[int, list[int]]]:
     for year in range(start, stop + 1):
-        messages = client.search(["BEFORE", date(year+1, 1, 1),
-                                  "SINCE", date(year, 1, 1)])
+        messages = client.search(["BEFORE", date(year + 1, 1, 1), "SINCE", date(year, 1, 1)])
         if len(messages) == 0:
             continue
         print("# messages", len(messages))
@@ -26,8 +28,8 @@ def iterate_per_year(client: IMAPClient, start: int = 2000, stop: int = 2024) ->
 def default(obj):
     if isinstance(obj, Header):
         return str(obj)
-    elif isinstance(obj, Message):
-        return list((k.lower(), default(v)) for k, v in obj.items())
+    if isinstance(obj, Message):
+        return [(k.lower(), default(v)) for k, v in obj.items()]
     return obj
 
 
@@ -39,7 +41,7 @@ class HeadersCache:
 
     def sync(self, start: int = 2000):
         "sync all IMAP messages, with its cache"
-        old = set(int(i) for i in self.db.iterator(include_value=False))
+        old = {int(i) for i in self.db.iterator(include_value=False)}
         fresh = set()
         for year, messages in iterate_per_year(self.client, start=start):
             print("Year:", year, "messages", len(messages))
@@ -72,21 +74,17 @@ class HeadersCache:
             size = min(len(todo), 100)
             ids = todo[:size]
             wb = self.db.write_batch()
-            #print("messages", ids, size, todo)
             for msgid, data in self.client.fetch(ids, ["RFC822"]).items():
                 if msgid is None:
                     continue
-                email = parser.parsebytes(text=data[b"RFC822"],
-                                          headersonly=True)
+                email = parser.parsebytes(text=data[b"RFC822"], headersonly=True)
                 headers = orjson.dumps(email, default=default)
                 wb.put(str(msgid).encode(), headers)
                 yield msgid, orjson.loads(headers)
             todo = todo[size:]
             wb.write()
 
-
-if __name__ == "__main__":
-    import os
+def run():
     assert os.getenv("IMAP"), "You need to set some ENVs"
 
     client = IMAPClient(os.getenv("IMAP"), use_uid=True, ssl=True)
@@ -95,3 +93,6 @@ if __name__ == "__main__":
     cache = HeadersCache(client)
     cache.sync()
     client.logout()
+
+if __name__ == "__main__":
+    run()
