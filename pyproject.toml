@@ -6,7 +6,7 @@ authors = [{ name = "Mathieu Lecarme", email = "mathieu@garambrogne.net" }]
 readme = "README.md"
 dependencies = [
     "imapclient == 3.*",
-    "google-api-python-client >= 2.90",
+    "google-api-python-client >= 2.151",
     "google-auth-httplib2",
     "google-auth-oauthlib",
     "certifi",
