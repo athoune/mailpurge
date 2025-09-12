@@ -13,7 +13,7 @@ from imapclient import IMAPClient
 
 
 def iterate_per_year(
-    client: IMAPClient, start: int = 2000, stop: int = 2024
+    client: IMAPClient, start: int = 2000, stop: int = 2025
 ) -> Iterator[Tuple[int, list[int]]]:
     for year in range(start, stop + 1):
         messages = client.search(["BEFORE", date(year + 1, 1, 1), "SINCE", date(year, 1, 1)])
