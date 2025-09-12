@@ -1,6 +1,6 @@
 # Mailpurge
 
 ```
-uv run python -m mailpurge
+poetry run python -m mailpurge
 ```
 
