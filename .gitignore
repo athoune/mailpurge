@@ -3,3 +3,5 @@ password.sh
 purge.yml
 __pycache__
 dist
+*.epub
+*.ipynb
