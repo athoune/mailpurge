@@ -67,12 +67,14 @@ def run():
     print("Quota", client.get_quota())
     print("Folders", client.list_folders())
 
-    rules = yaml.load(open("purge.yml"), Loader=yaml.Loader)
+    with open("purge.yml") as f:
+        rules = yaml.safe_load(f)
     pprint(rules)
 
     purged = flamer(client, rules, debug=True)
     print(purged, "purged")
     client.logout()
+
 
 if __name__ == "__main__":
     run()
