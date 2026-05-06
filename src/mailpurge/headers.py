@@ -16,7 +16,9 @@ def iterate_per_year(
     client: IMAPClient, start: int = 2000, stop: int = 2026
 ) -> Iterator[Tuple[int, list[int]]]:
     for year in range(start, stop + 1):
-        messages = client.search(["BEFORE", date(year + 1, 1, 1), "SINCE", date(year, 1, 1)])
+        messages = client.search(
+            ["BEFORE", date(year + 1, 1, 1), "SINCE", date(year, 1, 1)]
+        )
         if len(messages) == 0:
             continue
         print("# messages", len(messages))
@@ -35,6 +37,7 @@ def default(obj):
 
 class HeadersCache:
     "IMAP headers, with a cache"
+
     def __init__(self, client: IMAPClient, path: str = "./headers.cache"):
         self.db = plyvel.DB(path, create_if_missing=True)
         self.client = client
@@ -84,6 +87,7 @@ class HeadersCache:
             todo = todo[size:]
             wb.write()
 
+
 def run():
     assert os.getenv("IMAP"), "You need to set some ENVs"
 
@@ -93,6 +97,7 @@ def run():
     cache = HeadersCache(client)
     cache.sync()
     client.logout()
+
 
 if __name__ == "__main__":
     run()

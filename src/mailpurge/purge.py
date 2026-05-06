@@ -18,7 +18,9 @@ def flamer(server: IMAPClient, rules: dict, debug: bool = False) -> int:
     purged = 0
 
     for folder, rules in rules["purge"].items():
-        select_info = server.select_folder(folder, readonly = True) # Seen/Unseen flag should not me modified
+        select_info = server.select_folder(
+            folder, readonly=True
+        )  # Seen/Unseen flag should not me modified
         if debug:
             print("%d messages in INBOX" % select_info[b"EXISTS"])
         for purge in rules:
@@ -47,13 +49,17 @@ def flamer(server: IMAPClient, rules: dict, debug: bool = False) -> int:
             if debug:
                 print("Purge", len(prunes), "messages")
             purged += len(prunes)
-            select_info = server.select_folder(folder, readonly = False) # I can delete a read only mail
+            select_info = server.select_folder(
+                folder, readonly=False
+            )  # I can delete a read only mail
             for batch in batched(prunes, BATCH_DELETE_SIZE):
                 server.delete_messages(batch)
                 exp = server.expunge()
                 if debug:
                     print("expunge", exp)
-            select_info = server.select_folder(folder, readonly = True) # Back to read only
+            select_info = server.select_folder(
+                folder, readonly=True
+            )  # Back to read only
     return purged
 
 
